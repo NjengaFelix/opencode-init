@@ -1,521 +1,241 @@
 ---
 name: opencode-init
-description: Initialize OpenCode settings, permissions, agents, MCP servers, models, themes, and tools for optimal workflow
+description: Initialize and configure OpenCode settings, permissions, agents, and tools for new projects
 license: MIT
 compatibility: opencode
 metadata:
   category: configuration
-  type: official
+  type: community
 ---
 
-# OpenCode Configuration Guide
+## What I do
 
-This skill helps configure all aspects of OpenCode for your workspace.
+I help you initialize OpenCode configurations for optimal development workflows:
 
-## Core Configuration Files
+- **Quick setup** - Choose from ready-to-use configuration templates
+- **Permissions** - Configure safe defaults for solo or team development
+- **Agents** - Create custom agents for specific tasks
+- **MCP servers** - Add external tools (filesystem, search, databases)
+- **Models** - Select optimal models for different use cases
+- **Troubleshooting** - Fix common configuration issues
 
-### 1. Project Config: `opencode.json`
+## When to use me
 
-The main configuration file in your project root:
+Load this skill when:
+
+- **Setting up a new project** - "Initialize OpenCode for this project"
+- **First-time setup** - "Help me configure OpenCode"
+- **Security review** - "Make my OpenCode setup more secure"
+- **Team onboarding** - "Set up OpenCode for our team"
+- **Troubleshooting** - "My config isn't working"
+
+## Quick Setup Templates
+
+### Secure Team Setup (Recommended)
+For collaborative projects requiring approval for destructive actions:
 
 ```json
 {
   "$schema": "https://opencode.ai/config.json",
-  "default_agent": "researcher",
+  "default_agent": "build",
   "permission": {
     "skill": "ask",
     "webfetch": "allow",
     "read": "allow",
-    "write": "allow",
-    "edit": "allow",
-    "bash": "allow",
+    "write": "ask",
+    "edit": "ask",
+    "bash": "ask",
     "glob": "allow",
     "grep": "allow"
   }
 }
 ```
 
-### 2. Global Config: `~/.config/opencode/opencode.json`
-
-User-wide settings that apply to all projects.
-
----
-
-## Permission System
-
-### Permission Levels
-
-| Level | Behavior |
-|-------|----------|
-| `allow` | Immediate execution |
-| `deny` | Block and hide from agent |
-| `ask` | Prompt user for approval |
-
-### Pattern-Based Permissions
+### Fast Solo Development
+For personal projects where you trust the AI:
 
 ```json
 {
+  "$schema": "https://opencode.ai/config.json",
+  "default_agent": "build",
   "permission": {
-    "skill": {
-      "*": "allow",
-      "pr-review": "allow",
-      "internal-*": "deny",
-      "experimental-*": "ask"
+    "skill": "allow",
+    "webfetch": "allow",
+    "read": "allow",
+    "write": "allow",
+    "edit": "allow",
+    "bash": "ask",
+    "glob": "allow",
+    "grep": "allow"
+  }
+}
+```
+
+### Read-Only Analysis
+For exploring code without making changes:
+
+```json
+{
+  "$schema": "https://opencode.ai/config.json",
+  "default_agent": "plan",
+  "permission": {
+    "skill": "ask",
+    "webfetch": "allow",
+    "read": "allow",
+    "write": "deny",
+    "edit": "deny",
+    "bash": "deny",
+    "glob": "allow",
+    "grep": "allow"
+  }
+}
+```
+
+## Essential Configurations
+
+### Permission Patterns
+
+Control what actions require approval:
+
+| Level | Use case |
+|-------|----------|
+| `allow` | Safe operations (read, glob, grep) |
+| `ask` | Destructive operations (write, edit, bash) |
+| `deny` | Disable entirely |
+
+**Pattern matching for specific tools:**
+```json
+{
+  "permission": {
+    "bash": {
+      "*": "ask",
+      "git status*": "allow",
+      "git log*": "allow"
     }
   }
 }
 ```
 
-### Per-Agent Permissions
+### MCP Server Quick Add
+
+Add external capabilities (place in `opencode.json`):
 
 ```json
 {
-  "agent": {
-    "plan": {
-      "permission": {
-        "skill": {
-          "internal-*": "allow"
-        }
+  "mcpServers": {
+    "filesystem": {
+      "command": "npx",
+      "args": ["-y", "@modelcontextprotocol/server-filesystem", "."]
+    },
+    "brave-search": {
+      "command": "npx",
+      "args": ["-y", "@modelcontextprotocol/server-brave-search"],
+      "env": {
+        "BRAVE_API_KEY": "{env:BRAVE_API_KEY}"
       }
     }
   }
 }
 ```
 
----
+Popular MCP servers: filesystem, git, sqlite, brave-search, puppeteer
 
-## Agent Configuration
-
-### Built-in Agents
-
-Available built-in agents: `code`, `ask`, `edit`, `plan`, `review`, `researcher`
-
-### Custom Agent Definition
+### Custom Agent Template
 
 Create `.opencode/agents/my-agent.md`:
 
 ```markdown
 ---
-description: Specialized agent for [purpose]
-mode: primary|secondary
+description: What this agent does and when to use it
+mode: subagent
 tools:
-  skill: true
-  webfetch: true
-  read: true
-  write: true
-  edit: true
+  write: false
+  edit: false
   bash: true
-permission:
-  skill:
-    "*": "allow"
 ---
 
-# My Agent
-
-## Purpose
-What this agent does...
-
-## Workflow
-1. Step one
-2. Step two
-
-## Tools
-- Use `skill` to load domain knowledge
-- Use `read` to examine files
+Your specific instructions here. Be clear about:
+- What this agent should focus on
+- What it should avoid
+- How to provide output
 ```
 
-### Agent Frontmatter Options
+### Model Selection
 
-| Field | Description |
-|-------|-------------|
-| `description` | Short description for agent selection |
-| `mode` | `primary` (default) or `secondary` |
-| `tools` | Enable/disable specific tools |
-| `permission` | Override global permissions |
-
----
-
-## MCP Server Configuration
-
-### Adding MCP Servers
-
-```json
-{
-  "mcpServers": {
-    "server-name": {
-      "command": "npx",
-      "args": ["-y", "@modelcontextprotocol/server-filesystem", "/path"],
-      "env": {
-        "ENV_VAR": "value"
-      }
-    }
-  }
-}
-```
-
-### Popular MCP Servers
-
-- **Filesystem**: `@modelcontextprotocol/server-filesystem`
-- **Git**: `@modelcontextprotocol/server-git`
-- **SQLite**: `@modelcontextprotocol/server-sqlite`
-- **Brave Search**: `@modelcontextprotocol/server-brave-search`
-- **Puppeteer**: `@modelcontextprotocol/server-puppeteer`
-
-### Environment Variables
-
-```json
-{
-  "mcpServers": {
-    "brave-search": {
-      "command": "npx",
-      "args": ["-y", "@modelcontextprotocol/server-brave-search"],
-      "env": {
-        "BRAVE_API_KEY": "${BRAVE_API_KEY}"
-      }
-    }
-  }
-}
-```
-
----
-
-## Model Configuration
-
-### Setting Default Models
+Choose appropriate models for different tasks:
 
 ```json
 {
   "model": {
-    "default": "claude-sonnet-4",
-    "fast": "claude-haiku-4",
-    "smart": "claude-opus-4"
+    "default": "anthropic/claude-sonnet-4",
+    "fast": "anthropic/claude-haiku-4",
+    "smart": "anthropic/claude-opus-4"
   }
 }
 ```
 
-### Per-Agent Models
+## Common Workflows
 
-```json
-{
-  "agent": {
-    "code": {
-      "model": "claude-sonnet-4"
-    },
-    "plan": {
-      "model": "claude-opus-4"
-    }
-  }
-}
+### 1. New Project Setup
+```
+Load opencode-init
+"Set up OpenCode for this Node.js project with team-friendly permissions"
 ```
 
-### Model Options
-
-Available models depend on your providers. Common options:
-- `claude-opus-4`
-- `claude-sonnet-4`
-- `claude-haiku-4`
-- `gpt-4o`
-- `gpt-4o-mini`
-
----
-
-## Theme Configuration
-
-### UI Themes
-
-```json
-{
-  "theme": {
-    "mode": "dark",
-    "accent": "blue",
-    "font": "jetbrains-mono"
-  }
-}
+### 2. Add MCP Server
+```
+"Help me add the filesystem MCP server to this project"
 ```
 
-### Available Themes
-
-Check current themes with: `/theme` command in TUI
-
----
-
-## Tools Configuration
-
-### Enabling/Disabling Tools
-
-```json
-{
-  "tools": {
-    "skill": true,
-    "webfetch": true,
-    "read": true,
-    "write": true,
-    "edit": true,
-    "bash": true,
-    "glob": true,
-    "grep": true
-  }
-}
+### 3. Create Code Review Agent
+```
+"Create an agent that reviews code without making edits"
 ```
 
-### Per-Agent Tool Control
-
-```json
-{
-  "agent": {
-    "review": {
-      "tools": {
-        "write": false,
-        "edit": false,
-        "bash": false
-      }
-    }
-  }
-}
+### 4. Configure Models
 ```
-
----
-
-## Rules Configuration
-
-### Global Rules
-
-Create `.opencode/rules.md` for project-wide rules:
-
-```markdown
-# Project Rules
-
-## Code Style
-- Use TypeScript strict mode
-- Prefer async/await over callbacks
-
-## File Organization
-- Place tests in `__tests__/` directories
-- Use kebab-case for file names
+"Set up fast model for simple tasks and smart model for complex ones"
 ```
-
-### Per-Agent Rules
-
-```json
-{
-  "agent": {
-    "code": {
-      "rules": [
-        "Always add JSDoc comments",
-        "Follow existing code patterns"
-      ]
-    }
-  }
-}
-```
-
----
-
-## Commands Configuration
-
-### Custom Commands
-
-```json
-{
-  "commands": {
-    "test": "npm test",
-    "build": "npm run build",
-    "lint": "npm run lint"
-  }
-}
-```
-
-### Slash Commands
-
-Create custom slash commands in `.opencode/commands/`:
-
-```javascript
-// .opencode/commands/deploy.js
-export default async function({ context }) {
-  await context.tools.bash.execute({
-    command: "npm run build && npm run deploy"
-  });
-}
-```
-
----
-
-## Formatters Configuration
-
-### Setting Formatters
-
-```json
-{
-  "formatters": {
-    "typescript": "prettier",
-    "javascript": "prettier",
-    "json": "prettier",
-    "markdown": "prettier"
-  }
-}
-```
-
-### Formatter Options
-
-```json
-{
-  "formatters": {
-    "prettier": {
-      "printWidth": 100,
-      "tabWidth": 2,
-      "semi": true,
-      "singleQuote": false
-    }
-  }
-}
-```
-
----
-
-## LSP Server Configuration
-
-### Adding LSP Servers
-
-```json
-{
-  "lsp": {
-    "typescript": {
-      "command": "typescript-language-server",
-      "args": ["--stdio"]
-    },
-    "eslint": {
-      "command": "vscode-eslint-language-server",
-      "args": ["--stdio"]
-    }
-  }
-}
-```
-
----
-
-## Complete Example Configuration
-
-```json
-{
-  "$schema": "https://opencode.ai/config.json",
-  "default_agent": "code",
-  
-  "permission": {
-    "skill": "ask",
-    "webfetch": "allow",
-    "read": "allow",
-    "write": "allow",
-    "edit": "ask",
-    "bash": "ask",
-    "glob": "allow",
-    "grep": "allow"
-  },
-  
-  "model": {
-    "default": "claude-sonnet-4",
-    "fast": "claude-haiku-4",
-    "smart": "claude-opus-4"
-  },
-  
-  "agent": {
-    "code": {
-      "model": "claude-sonnet-4",
-      "permission": {
-        "write": "allow",
-        "edit": "allow"
-      }
-    },
-    "plan": {
-      "model": "claude-opus-4",
-      "permission": {
-        "skill": {
-          "internal-*": "allow"
-        }
-      }
-    }
-  },
-  
-  "mcpServers": {
-    "filesystem": {
-      "command": "npx",
-      "args": ["-y", "@modelcontextprotocol/server-filesystem", "."]
-    }
-  },
-  
-  "commands": {
-    "test": "npm test",
-    "build": "npm run build"
-  },
-  
-  "formatters": {
-    "typescript": "prettier",
-    "javascript": "prettier"
-  },
-  
-  "theme": {
-    "mode": "dark",
-    "accent": "blue"
-  }
-}
-```
-
----
 
 ## Best Practices
 
 ### Security
-- Use `ask` permission for destructive operations
-- Store sensitive env vars in `.env` files, not in config
-- Review MCP server permissions before adding
+- **Never commit secrets** - Use `{env:VARIABLE}` syntax
+- **Start restrictive** - Use `ask` permission, relax as needed
+- **Review MCP servers** - Understand what access they need
 
 ### Organization
-- Keep project-specific settings in `opencode.json`
-- Use global config (`~/.config/opencode/opencode.json`) for user preferences
-- Create custom agents for specialized workflows
+- **Global config** (`~/.config/opencode/`) for personal preferences
+- **Project config** (`opencode.json`) for team-shared settings
+- **Keep configs in git** - Safe to share (no secrets)
 
-### Version Control
-- Commit `opencode.json` to share team settings
-- Don't commit API keys or secrets
-- Document custom agents and skills in README
-
-### Skills Discovery
-- Load this skill to reference configuration options
-- Create domain-specific skills for repeated tasks
-- Use pattern matching for skill permissions
-
----
+### Maintenance
+- **Document custom agents** - Add README in `.opencode/agents/`
+- **Version control skills** - Track custom skills in git
+- **Test permissions** - Verify `ask` prompts work as expected
 
 ## Troubleshooting
 
-### Config Not Loading
-1. Verify `$schema` is correct
-2. Check JSON syntax is valid
-3. Ensure file is named exactly `opencode.json`
+### Config not loading
+1. Verify file is named exactly `opencode.json`
+2. Check JSON syntax with `jq opencode.json`
+3. Ensure `$schema` is correct
 
-### Agent Not Found
-1. Check agent file is in `.opencode/agents/`
+### Agent not found
+1. Check agent is in `.opencode/agents/` or `~/.config/opencode/agents/`
 2. Verify frontmatter has `description`
-3. Ensure `.md` extension
+3. Ensure file ends with `.md`
 
-### MCP Server Failing
-1. Verify command is in PATH
-2. Check environment variables are set
-3. Review MCP server logs with `--verbose`
-
-### Permissions Not Applying
-1. Check permission hierarchy (global vs project vs agent)
-2. Verify pattern syntax for wildcards
+### Permission not applying
+1. Check hierarchy: global → project → agent
+2. Use wildcards correctly: `git *` not `git*`
 3. Restart OpenCode to reload config
 
----
+## Next Steps
 
-## When to Use
+For detailed configuration in specific areas, load these skills:
 
-Use this skill when you need to:
-- Set up a new OpenCode project
-- Configure permissions for security
-- Add MCP servers for extended functionality
-- Customize agents for specific workflows
-- Troubleshoot configuration issues
-- Optimize model selection for tasks
-- Set up global defaults
+- **opencode-permissions** - Deep dive into security and permissions
+- **opencode-mcp** - MCP server setup and management
+- **opencode-agents** - Creating and customizing agents
+- **opencode-models** - Model selection and optimization
